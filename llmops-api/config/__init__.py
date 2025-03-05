@@ -1,4 +1,4 @@
-#!/user/bin/env python
+#!/user/bin/.env python
 # -*- coding: utf-8 -*-
 """
 应用配置文件相关
@@ -6,3 +6,6 @@
 @Author  : lianyutian
 @File    : __init__.py.py
 """
+from .config import Config
+
+__all__ = ["Config"]

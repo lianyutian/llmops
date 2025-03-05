@@ -1,4 +1,4 @@
-#!/user/bin/env python
+#!/user/bin/.env python
 # -*- coding: utf-8 -*-
 """
 应用中间件目录

@@ -1,4 +1,4 @@
-#!/user/bin/env python
+#!/user/bin/.env python
 # -*- coding: utf-8 -*-
 """
 应用路由
@@ -6,3 +6,6 @@
 @Author  : lianyutian
 @File    : __init__.py.py
 """
+from .router import Router
+
+__all__ = ["Router"]

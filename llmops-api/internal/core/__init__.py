@@ -1,4 +1,4 @@
-#!/user/bin/env python
+#!/user/bin/.env python
 # -*- coding: utf-8 -*-
 """
 LLM核心文件，集成 LangChain、LLM、Embedding等非逻辑代码
