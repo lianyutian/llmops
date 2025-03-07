@@ -7,10 +7,11 @@
 """
 import os
 
-from flask import request
 from openai import OpenAI
 
+from internal.exception.exception import NotFoundException
 from internal.schema.app_schema import CompletionReq
+from pkg.response.response import success_json, validate_error_json
 
 
 class AppHandler:
@@ -20,10 +21,8 @@ class AppHandler:
         """聊天接口"""
         req = CompletionReq()
         if not req.validate():
-            return req.errors
+            return validate_error_json(req.errors)
 
-        # 1. 提取从接口中获取的输入
-        query = request.json.get("query")
         # 2. 构建 OpenAi 的请求参数,并发起请求
         client = OpenAI(
             base_url=os.getenv("BASE_URL")
@@ -35,12 +34,14 @@ class AppHandler:
                 {"role": "system", "content": "You are a helpful assistant"},
                 {
                     "role": "user",
-                    "content": query
+                    "content": req.query.data
                 }
             ]
         )
-        return completion.choices[0].message.content
+        content = completion.choices[0].message.content
+
+        return success_json({"content": content})
 
     def ping(self):
         """ping"""
-        return {"ping": "pong"}
+        raise NotFoundException("数据未查询到")
