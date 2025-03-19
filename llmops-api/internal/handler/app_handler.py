@@ -7,7 +7,12 @@
 """
 import os
 
-from openai import OpenAI
+from langchain.memory import ConversationBufferWindowMemory
+from langchain_community.chat_message_histories import FileChatMessageHistory
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.runnables import RunnablePassthrough, RunnableLambda
+from langchain_openai import ChatOpenAI
 
 from internal.exception.exception import NotFoundException
 from internal.schema.app_schema import CompletionReq
@@ -23,22 +28,30 @@ class AppHandler:
         if not req.validate():
             return validate_error_json(req.errors)
 
-        # 2. 构建 OpenAi 的请求参数,并发起请求
-        client = OpenAI(
-            base_url=os.getenv("BASE_URL")
-        )
-        # 3. 返回结果
-        completion = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant"},
-                {
-                    "role": "user",
-                    "content": req.query.data
-                }
-            ]
-        )
-        content = completion.choices[0].message.content
+        # 1.构建prompt&记忆
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", "You are a helpful assistant"),
+            MessagesPlaceholder("chat_history"),
+            ("human", "{query}")
+        ])
+        memory = ConversationBufferWindowMemory(k=3, input_key="query", return_messages=True,
+                                                chat_memory=FileChatMessageHistory(
+                                                    "../../storage/memory/chat_history.txt"))
+
+        # 2. 构建大模型
+        llm = ChatOpenAI(base_url=os.getenv("BASE_URL"))
+
+        # 3. 构建解析器
+        parser = StrOutputParser()
+
+        # 3. 构建链
+        chain = RunnablePassthrough.assign(
+            chat_history=RunnableLambda(memory.load_memory_variables) | (
+                lambda x: x.get("history"))) | prompt | llm | parser
+
+        # 4. 调用链
+        content = chain.invoke({"query": req.query.data})
+        memory.save_context({"query": req.query.data}, {"output": content})
 
         return success_json({"content": content})
 
