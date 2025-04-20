@@ -16,6 +16,7 @@ class TestAppHandler:
     @pytest.mark.parametrize("query", [None, "你是谁"])
     def test_completion(self, query, client):
         response = client.post("/app/completion", json={"query": query})
+        print(response.json)
         assert response.status_code == 200
         if query is None:
             assert response.json.get("code") == HttpCode.VALIDATION_ERROR
